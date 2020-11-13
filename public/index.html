@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Live Chat</title>
+    <style>
+        h2,
+        h1 {
+            padding: 0;
+            margin: 0;
+        }
+        
+        body {
+            background: linear-gradient(red 0%, orange 10% 30%, yellow 50% 70%, green 90% 100%);
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+        }
+        
+        .placement {
+            display: flex;
+        }
+        
+        .containerPlacement {
+            width: 25%;
+            height: 100%;
+        }
+        
+        .containerUserConnection {
+            height: 300px;
+            background-color: black;
+            color: blanchedalmond;
+        }
+        
+        .containerPlacementForm {
+            width: 50%;
+            height: 100%;
+            background-color: antiquewhite;
+        }
+        
+        h1 {
+            text-align: center;
+            height: 20px;
+        }
+        
+        form {
+            height: 20px;
+        }
+        
+        .containerAllMessage {
+            height: auto;
+        }
+        
+        #messages {
+            padding-right: 30px;
+        }
+        
+        .containerMessageinteractions {
+            text-align: end;
+        }
+        
+        .taillInput {
+            width: 80%;
+            border-radius: 0%;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Code Here -->
+    <div class="placement">
+        <div class="containerPlacement">
+            <div class="containerUserConnection">
+                <h2>USER CONNECTER</h2>
+                <h3 id="userIdName"></h3>
+            </div>
+        </div>
+        <div class="containerPlacementForm">
+            <h1>Le bazzard</h1>
+            <!-- Block des message des utilissateur  -->
+            <div class="containerAllMessage" id="containerAll_Message">
+                <ul id="messages"></ul>
+            </div>
+            <!-- Formulaire avec input et le bouton envoyer -->
+            <form id="formElement">
+                <div class="containerMessageinteractions">
+                    <input type="text" name="message" class="taillInput">
+                    <button type="submit">ENVOYER</button>
+                </div>
+            </form>
+        </div>
+        <div class="containerPlacement">
+            <div class="containerUserConnection">
+                <h2>NOMBRE USER CONNECTER</h2>
+                <h3 id="nombreUserconnected"></h3>
+            </div>
+        </div>
+    </div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script type="text/javascript">
+        let socket = io();
+        let user = prompt('Your Name PLS', "Anonymous");
+        let userId = user + Date.now();
+
+        socket.on('users connected', (users, names) => {
+            console.log(users + ' users are connected', names);
+            document.getElementById('nombreUserconnected').innerHTML = `<span>${users}</span>`
+            document.getElementById('userIdName').innerHTML = `<span>${names.join("<br>")}</span>`
+        });
+
+        socket.on('user disconnected', user => {
+            console.log(user + ' is disconnected');
+        });
+
+        socket.emit('user connected', user);
+
+        // socket.on('user connected', function (user) {
+        //   let usserName = document.createElement('li');
+
+        //   document.getElementById('userIdName').innerHTML = `<p> ${user.usserName}</p>`;
+        // });
+
+        socket.on("chat message", function(msg) {
+            let messageUser = document.createElement('li');
+            messageUser.innerHTML = `
+    <div style="text-align:${msg.id == userId ? 'right' : 'left'}; background-color:${msg.id == userId ? 'blue' : 'red'}; border-radius:${msg.id == userId ? '15px 0px 0px 15px' : '0px 15px 15px 0px' }">
+      <h3>${msg.name}</h3>
+      <p>${msg.messageUser}</p>
+      <p>${new Intl.DateTimeFormat('fr', {
+              year: 'numeric',
+              month: 'numeric',
+              day: 'numeric',
+              hour: 'numeric',
+              minute: 'numeric',
+              second: 'numeric'
+            }).format(new Date(msg.date))}</p>
+          </div>
+  `;
+            document.getElementById('messages').appendChild(messageUser);
+        });
+        //
+        document
+            .getElementById('formElement')
+            .addEventListener('submit', function(event) {
+                event.preventDefault();
+                let msg = event.target.message.value;
+                socket.emit('chat message', {
+                    name: user,
+                    messageUser: msg,
+                    id: userId,
+                    date: Date.now(),
+
+                });
+                event.target.message.value = '';
+            });
+    </script>
+</body>
+
+</html>
